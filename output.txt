@@ -1,0 +1,1532 @@
+<h2>Things dicsussed in this documentation</h2>
+<li>1. Prototypical Inheritance in JS</li>
+<li>2. Scope in JS</li>
+<li>3. Function Declaration and Function Expression</li>
+<h2>Prototypical Inheritance in JS</h2>
+In JavaScript when one object inherits from another prototypically, you are able to access all the properties and methods from the 
+parent object. 
+<pre><code>
+[js]
+    var obj1 = {
+      someProp: 'obj1 property!',
+      someMethod: function () {
+        alert('obj1 method!');
+      }
+    };
+    var obj2 = Object.create(obj1);
+    obj2.someProp = 'obj2 property!';
+[js]
+</code></pre>
+You might think from the above code that someProp was <span class='quoted'>"changed"</span> from  <span class='quoted'>"obj1 property!"</span> to  <span class='quoted'>"obj2 property!"</span> when obj2 was 
+instantiated. However, you can not change properties on an  <span class='quoted'>"object's prototype"</span> like that. All that code did was  <span class='quoted'>"create a property"</span> 
+called <span class='quoted'>"someProp"</span> on <span class='quoted'>"obj2"</span> that <span class='quoted'>"masks"</span> the value of the  <span class='quoted'>"underlying someProp on obj1".</span> If you run  <span class='quoted'>"delete obj2.someProp"</span> then 
+ <span class='quoted'>"someProp won't be gone",</span> it will  <span class='quoted'>"revert to showing"</span> the value of <span class='quoted'>"obj1.someProp".</span> This is the way  <span class='quoted'>"nested scopes"</span> work. Setting a 
+property on a  <span class='quoted'>"child scope"</span> does not  <span class='quoted'>"change the property"</span> with the same name on the <span class='quoted'>"hides"</span> 
+<h2>Scope in JS</h2>
+<h2>There are only two scopes</h2>
+<li>1. Function scope</li>
+<li>2. Global scope</li>
+Function are the atomic unit of the <span class='quoted'>"scope".</span> 
+<h2>When we define something like below</h2>
+<h2>** Compilation phase **</h2>
+<pre><code>
+[js]
+        var foo = "bar"; /* declaration */ /* while compiling this one statement gets broken into two */
+                /* the declaration part using var */
+                /* the assignment part */
+        function bar() { /* declaration */
+            var foo = "bar"; /* declaration */
+        }
+        function baz(foo) { /* declaration of function as well as foo */
+            foo = "bam";
+            bam = "yay";
+        }
+[js]
+</code></pre>
+<h2>First thing to note about the above code is</h2>
+JS do JIT(Just in time) compilation, which means function are not compiled when they are defined but they gets 
+compiled and called at the time of call. 
+Second everything is scoped. 
+So, the very first line has a scope of 'global' 
+while <span class='quoted'>"foo"</span> inside the <span class='quoted'>"bar"</span> function has the scope of <span class='quoted'>"bar"</span> 
+When the js compiles the <span class='quoted'>"baz"</span> function, it treats the  <span class='quoted'>"argument as a declaration".</span> 
+So <span class='quoted'>"foo"</span> in the argument will be treated as a local variable. 
+And the <span class='quoted'>"scope"</span> will be of <span class='quoted'>"baz".</span> 
+<h2>** Execution phase **</h2>
+Now we have to note that there will be no <span class='quoted'>"var"</span> in the execution phase. 
+So the first line will be : foo = <span class='quoted'>"bar"</span> 
+without any <span class='quoted'>"var".</span> 
+So even if we define  <span class='quoted'>"var foo"</span> 100 times, while execution it will be ignored. 
+So defining var foo in somewhere in our program has no impact on the rest as that will be ignored. 
+<h2>Compiler terminologies</h2>
+<span class='quoted'>"lhs"</span> : left hand side 
+<span class='quoted'>"rhs"</span> : right hand side 
+of an assignment. 
+In our language its the <span class='quoted'>"="</span> sign. 
+<h2>So in first line</h2>
+a) foo will be our lhs reference 
+b) <span class='quoted'>"bar"</span> will be our rhs reference 
+But <span class='quoted'>"lhs"</span> and <span class='quoted'>"rhs"</span> can occur without assignment operator. 
+<h2>So to need to understand them in some other way which is</h2>
+<span class='quoted'>"lhs"</span> : *the target* 
+<span class='quoted'>"rhs"</span> : *the source* 
+SO in case of function <span class='quoted'>"argument"</span> there is an implicit assignment. 
+When we execute the function <span class='quoted'>"bar"</span> we will ask the scope of bar that wheater 
+it knows about the <span class='quoted'>"foo"</span> which happens to be the <span class='quoted'>"lhs".</span> 
+<h2>When we execute the baz</h2>
+We will ask scope of <span class='quoted'>"baz",</span> wheater it knows 
+about an <span class='quoted'>"identifier"</span> named <span class='quoted'>"foo"</span> which happens to be 
+the <span class='quoted'>"lhs".</span> 
+So it will say that: yes, its in my declaration. 
+But when we execute the line: bam = <span class='quoted'>"yay"</span> 
+We will ask <span class='quoted'>"baz"</span> that wheater it 
+heard about an <span class='quoted'>"lhs"</span> identifier named 
+<span class='quoted'>"bam".</span> 
+It will say: no. 
+<h2>Now where do we go</h2>
+ <span class='quoted'>"We go outer one level".</span> 
+So it will be our <span class='quoted'>"global"</span> scope 
+in this case. 
+So we will ask our <span class='quoted'>"global"</span> scope, wheater it 
+knows any identifier named <span class='quoted'>"bam"</span> which happens to 
+be the <span class='quoted'>"lhs".</span> 
+And it will say: <span class='quoted'>"yes",</span> i have just created it for you. 
+The <span class='quoted'>"global"</span> scope will create <span class='quoted'>"bam"</span> for us because 
+we have an <span class='quoted'>"lhs"</span> reference. 
+Note: * this thing is in non strict mode * 
+* So this assignment will create a global variable * 
+And thats why we get the idea of leakage of 
+global variables. 
+but when we will be in  <span class='quoted'>"strict mode"</span> the global 
+scope will say it does not knows. 
+While passing <span class='quoted'>"foo"</span> in the function <span class='quoted'>"baz",</span> 
+even if we try to redeclare <span class='quoted'>"foo"</span> using 
+ <span class='quoted'>"var foo",</span> the compiler will ignore it as 
+it has <span class='quoted'>"foo"</span> already. 
+<h2>** Note **</h2>
+In js <span class='quoted'>"undeclared"</span> and <span class='quoted'>"undefined"</span> are two different 
+words. 
+
+<span class='quoted'>"undefined"</span> : when we declare but it contains empty value. 
+<span class='quoted'>"undefined"</span> is more like <span class='quoted'>"uninitialised".</span> 
+<span class='quoted'>"undefined"</span> is an actual value. 
+<h2>Example</h2>
+<pre><code>
+[js]
+    var foo = "bar";
+    function bar() {
+      var foo = "baz";
+      function baz(foo) {
+        foo = "bam";
+        bam = "yay";
+      }
+      baz();
+    }
+    bar();
+    foo;
+    bam;
+    baz();
+[js]
+</code></pre>
+<h2>While compiling we will say</h2>
+hey  <span class='quoted'>"global scope"</span> i have a declaration for 
+variable called <span class='quoted'>"foo".</span> 
+For compiling the <span class='quoted'>"baz"</span> function it will ask 
+the scope of <span class='quoted'>"bar"</span> to register the function <span class='quoted'>"baz".</span> 
+While executing when we will go to the <span class='quoted'>"bar()".</span> 
+We will ask: hey global scope do you have a <span class='quoted'>"rhs"</span> 
+reference <span class='quoted'>"bar".</span> 
+* Note *: bar() will be an <span class='quoted'>"rhs"</span> not <span class='quoted'>"lhs"</span> because 
+there is no assignment going on at this point of time. 
+So it will say <span class='quoted'>"yes"</span> and it will return the 
+ <span class='quoted'>"function object bar".</span> 
+We have <span class='quoted'>"()"</span> after the <span class='quoted'>"bar",</span> so bar will have function 
+object and <span class='quoted'>"()"</span> will be used for calling the function. 
+<h2>* Note *</h2>
+In case we ask some <span class='quoted'>"rhs"</span> value which is not 
+declared in the scope, the behaivior is different. 
+The global scope does not create one for us if 
+its a <span class='quoted'>"rhs".</span> And it will throw a reference error. 
+This is common to <span class='quoted'>"restrict"</span> and <span class='quoted'>"unrestrict"</span> mode. 
+<h2>Function Declaration and Function Expression</h2>
+<pre><code>
+[js]
+    var foo = function bar() {
+      var foo = "baz";
+      function baz(foo) {
+        foo = bar;
+        foo;
+      }
+      baz();
+    };
+    foo();
+    bar();
+[js]
+</code></pre>
+If the <span class='quoted'>"function"</span> keyword is the first word in the 
+statement then its a function declaration. 
+Otherwise it will be <span class='quoted'>"Expressions".</span> 
+In our case it is function <span class='quoted'>"expression"</span> rather than 
+declaration. 
+Most of the time function expressions are anonymous 
+function, but in our case it is  <span class='quoted'>"named anonymous"</span> function. 
+As the first line in our code is function expression, 
+<span class='quoted'>"bar"</span> will not get defined in the outer scope. 
+In case of function expression, the name of the 
+function is enclosed in its own scope. 
+So the name <span class='quoted'>"bar"</span> exists throughout the function. 
+So calling  <span class='quoted'>"foo = bar"</span> is fine. But <span class='quoted'>"bar"</span> does not 
+exists in the global scope. 
+So calling <span class='quoted'>"bar()"</span> at the last line will raise 
+ <span class='quoted'>"reference error".</span> 
+<h2>Why we should use named anonymous function expression</h2>
+When we use anonymous function expression there are 
+<h2>three downside</h2>
+a) When we dont use named anonymous function expression 
+we  <span class='quoted'>"dont have any way to refer"</span> to ourself. 
+This property is required when we do recursion, 
+or when we bind some event to our function. 
+(name is necessary) 
+(many people think that <span class='quoted'>"this"</span> keyword is a reference 
+to itself but it is not.) 
+b) Anonymous function expression pose problem while debugging. 
+So giving a name is always helpful. 
+c) We dont need to look outside to know what is 
+being done by the function. 
+<h2>ex</h2>
+when we give name as <span class='quoted'>"handler"</span> it is evident 
+that this function is handling something. 
+<h2>Try catch in JS</h2>
+In Es3, <span class='quoted'>"try"</span> <span class='quoted'>"catch"</span> was added, and according to the 
+specification, <span class='quoted'>"catch"</span> has <span class='quoted'>"block"</span> scope. 
+Meaning, the variable which you will declare in the 
+<span class='quoted'>"catch"</span> clause will only be accessible in the <span class='quoted'>"catch"</span> clause 
+and not outside. 
+<pre><code>
+[js]
+    var foo;
+    try {
+      foo.length;
+    }
+    catch (err) {
+      console.log(err);
+    }
+    console.log(err); // ReferenceError.
+[js]
+</code></pre>
+So here <span class='quoted'>"err"</span> cant be accessed from outside. 
+<h2>Scope Models in JS</h2>
+<h2>There are two</h2>
+<li>1. Lexical scope which we were talking till now.</li>
+(lex refers to the lexing that occurs in the compiler) 
+(lexical scope means 
+<li>2. Dynamic scope (not present in js)</li>
+(run time scope) 
+<h2>IIFE Pattern (immediately invoked function expression)</h2>
+<pre><code>
+[js]
+    var foo = "foo";
+    (function() {
+      var foo = "foo2";
+      console.log(foo); // "foo2"
+    })();
+    console.log(foo); // "foo"
+[js]
+</code></pre>
+When we want to keep some statements in 
+segregated scope, we use this pattern. 
+In this pattern an <span class='quoted'>"anonymous"</span> <span class='quoted'>"function"</span> 
+<span class='quoted'>"expression"</span> has been used and is executed 
+rite away. 
+We can have  <span class='quoted'>"named function expression"</span> rather 
+than <span class='quoted'>"anonymous"</span> function expression. 
+But that thing will give out the <span class='quoted'>"name".</span> 
+And we wanted to hide our code in some other 
+scope which will not gets accessed from outside. 
+link to blog: http://benalman.com/news/2010/11/immediately-invoked-function-expression/ 
+<h2>Hoisting</h2>
+Its not a proper word in the specs, its only 
+being used to define the js behaiviors. 
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+      a;
+      b;
+      var a = b;
+      var b = 2;
+      b;
+      a;
+[js]
+</code></pre>
+what will happen if we execute this code? 
+<h2>Before executing there will be compilation</h2>
+During which the compiler will find the declaration 
+first. 
+<h2>so the above code will transform into</h2>
+<pre><code>
+[js]
+        var a;
+        var b;
+        a;
+        b;
+        a = b;
+        b = 2;
+        b;
+        a;
+[js]
+</code></pre>
+In the above code the compiler moves the declaration 
+of <span class='quoted'>"a"</span> and <span class='quoted'>"b"</span> to the top. 
+They were treated first. 
+ <span class='quoted'>"This movement of declaration to the top"</span> is called <span class='quoted'>"hoisting".</span> 
+So the compile phase will be line 1 and 2. 
+All the function and variable declaration will get 
+hoisted. 
+* Note *: the function expression does <span class='quoted'>"not"</span> get <span class='quoted'>"hoisted".</span> 
+So the below code 
+<pre><code>
+[js]
+      var a = b();
+      var c = d();
+      a;
+      c;
+      function b() {
+        return c;
+      }
+      var d = function() {
+        return b();
+      };
+[js]
+</code></pre>
+Will be converted to 
+<pre><code>
+[js]
+      function b() {
+        return c;
+      }
+      var a;
+      var c;
+      var d;
+      a = b();
+      c = d();
+      a;
+      c;
+      d = function() {
+        return b();
+      };
+[js]
+</code></pre>
+*Note*: Functions are hoisted before variables. 
+<h2>Consider the below code</h2>
+<pre><code>
+[js]
+    foo();
+    var foo = 2;
+    function foo() {
+      console.log("bar");
+    }
+    function foo() {
+      console.log("foo");
+    }
+[js]
+</code></pre>
+In this case first function <span class='quoted'>"foo"</span> containing <span class='quoted'>"bar"</span> will be 
+hoisted. Then the function <span class='quoted'>"foo"</span> containing <span class='quoted'>"foo"</span> 
+will be hoisted which will override the previous 
+hoisted value. 
+Then the variable foo gets hoisted and it will be 
+ignored as there is already a variable called <span class='quoted'>"foo"</span> 
+and it holds the last function. 
+<h2>*Note*</h2>
+<h2>* Mutual recursion *</h2>
+Two function calling each other till a 
+terminating condition is reached is 
+called Mutually recursive function. 
+And mutual recursion is not possible 
+in a language where there is not <span class='quoted'>"hoisting".</span> 
+ <span class='quoted'>"header files in c language"</span> are manual hoisting. 
+we are putting the declaration part on the top 
+of everything. 
+Js automatically do hoisting. 
+<h2>The "this" keyword</h2>
+Every function, while executing, has a reference 
+to its current execution context, called <span class='quoted'>"this".</span> 
+Execution context include far more than <span class='quoted'>"this"</span> keyword, 
+but we are only interested in <span class='quoted'>"this".</span> 
+ <span class='quoted'>"Execution context"</span> means : where the function has been 
+called and how the function has been called. 
+There are four rules for how the <span class='quoted'>"this"</span> keyword is bound. 
+<h2>And it all depends on call sight</h2>
+(It is the place in code where the function is executed) 
+<h2>Four rules</h2>
+<li>1. "Default binding rule" (4th according to preference)</li>
+<h2>ex</h2>
+<pre><code>
+[js]
+          function foo() {
+            console.log(this.bar);
+          }
+          var bar = "bar1";
+          var o2 = {bar: "bar2", foo: foo};
+          var o3 = {bar: "bar3", foo: foo};
+          foo(); // here there is only reference to the function
+                // and nothing else.
+                // In these situation, the default binding rule
+                // applies.
+                // This is also true with the IIFIs.
+          o2.foo();
+          o3.foo();
+[js]
+</code></pre>
+<h2>Default rule says</h2>
+a. If you are in strict mode, default to <span class='quoted'>"this"</span> keyword 
+is <span class='quoted'>"undefined"</span> value. 
+b. If not, default to <span class='quoted'>"this"</span> keyword is global object. 
+** Note **: In js everything is a reference to an object. 
+In the above code we have two reference to the <span class='quoted'>"foo".</span> 
+First is: our <span class='quoted'>"global"</span> variable is referencing the <span class='quoted'>"foo".</span> 
+Second: o2.foo is alos referencing the <span class='quoted'>"foo".</span> 
+<li>2. "Implicit binding rule": ( 3rd according to preference )</li>
+<h2>Consider the above code</h2>
+we have o2 and o3 which have same function <span class='quoted'>"foo".</span> 
+So we have an  <span class='quoted'>"implicit reference"</span> for <span class='quoted'>"foo".</span> 
+<span class='quoted'>"this.bar"</span> <span class='quoted'>"</span> 
+<h2>** Note **</h2>
+<h2>** Binding confusion **</h2>
+<pre><code>
+[js]
+            function foo() {
+              var bar = "bar1";
+              baz();
+            }
+            function baz() {
+              console.log(this.bar)
+            }
+            var bar = "bar2";
+            foo();
+[js]
+</code></pre>
+This code is fake but the concept is real. 
+Here the function <span class='quoted'>"baz"</span> is some third party 
+function on which the user does not have any 
+controll but user knows that this function is 
+using <span class='quoted'>"this.bar"</span> somewhere in the code, on the 
+other hand user have another function <span class='quoted'>"foo"</span> on 
+which user have controll. Now user have defined 
+<span class='quoted'>"bar"</span> locally and is trying to call <span class='quoted'>"bar()"</span> in 
+a hope of referencing the  <span class='quoted'>"local variable bar".</span> 
+Note: <span class='quoted'>"</span> 
+ <span class='quoted'>"lexical environment and the this mechanism"</span> 
+They are just two fundamentally different 
+mechanism and they dont cross over. 
+The above code was not doing what was expected from it. 
+<h2>The incorrect solution</h2>
+<pre><code>
+[js]
+            function foo() {
+              var bar = "bar1";
+              this.baz = baz;
+              this.baz();
+            }
+            function baz() {
+              console.log(this.bar);
+            }
+            var bar = "bar2";
+            foo();
+[js]
+</code></pre>
+<h2>How the above code is wrong</h2>
+<span class='quoted'>"this"</span> reference gets set by the sight of call. 
+In our code we need to find what is being referenced 
+by the <span class='quoted'>"this"</span> keyword. 
+As we can see that the function <span class='quoted'>"foo"</span> is 
+being called from the global scope, so 
+<span class='quoted'>"this"</span> will point to the global object as 
+we are in not strict mode. 
+<h2>So when we are saying </h2>
+this.baz = baz in function <span class='quoted'>"foo".</span> 
+We are actually saying 
+global.baz = baz 
+but global.baz is already there. 
+when we are calling the 'baz' function in 
+our <span class='quoted'>"foo"</span> function, 
+this.baz(): here the implicit rule applies 
+as we are calling <span class='quoted'>"object.function()"</span> 
+but the <span class='quoted'>"object"</span> is still <span class='quoted'>"global"</span> object. 
+so it will be <span class='quoted'>"global.baz()".</span> 
+<h2>3. "Explicit scope"</h2>
+<pre><code>
+[js]
+        function foo() {
+          console.log(this.bar);
+        }
+        var bar = "bar1";
+        var obj = {bar: "bar2"};
+        foo();            // bar1
+        foo.call(obj);    // bar2
+[js]
+</code></pre>
+<h2>Explicit binding say that</h2>
+If we use <span class='quoted'>".call()"</span> or <span class='quoted'>".apply()"</span> at the call sight, 
+both of these utilities take their  <span class='quoted'>"first parameter"</span> 
+as <span class='quoted'>"this"</span> binding. 
+<h2>* Problem with this keyword generality *</h2>
+In case of a controller, when we have <span class='quoted'>"this"</span> 
+pointing to the controller object, we can do all 
+our work by just using controller.mthd. 
+But when we do an ajax call, the things get a bit 
+different. We say in the callback i want to call my 
+<h2>controller method </h2>
+we pass an reference to the controller method. 
+But when it gets called the <span class='quoted'>"this"</span> binding gets 
+<span class='quoted'>"wrong",</span> it will  <span class='quoted'>"fall back"</span> to the <span class='quoted'>"global".</span> 
+Or say we have attached it to an event handler 
+like a  <span class='quoted'>"click handler"</span> on a button. When i click 
+the button, i want my controller method to 
+invoked but we will get frustrated because <span class='quoted'>"this"</span> 
+binding becomes the <span class='quoted'>"button"</span> itself rather than 
+my  <span class='quoted'>"controller object".</span> 
+* solution * 
+<span class='quoted'>"this"</span> 
+keyword reference. 
+<h2>ex</h2>
+<pre><code>
+[js]
+            function foo() {
+              console.log(this.bar);
+            }
+            var obj = {bar: "bar"};
+            var obj2 = {bar: "bar2"};
+            var orig = foo;
+            foo = function() {orig.call(obj);};
+            foo();    // "bar"
+            foo.call(obj2);  // ???
+[js]
+</code></pre>
+In the above code, everything is same apart from 
+declaration of <span class='quoted'>"orig"</span> variable and assigning it 
+'foo'. Now in the next line, we are overriding the 
+foo with a function expression, and 'forcing' the 
+call to 'foo' to the original 'foo' but fixing the 
+'this' reference to the 'obj'. 
+So both the function call will print <span class='quoted'>"bar".</span> 
+<h2>*Making an binding utility*</h2>
+<pre><code>
+[js]
+          function bind(fn, o) {
+            return function() {
+              fn.call(o);
+            };
+          }
+          function foo() {
+            console.log(this.bar);
+          }
+          var obj = {bar: "bar"};
+          var obj2 = {bar: "bar2"};
+          foo = bind(foo, obj);
+          foo();           // "bar"
+          foo.call(obj2);
+[js]
+</code></pre>
+This code is same as the above one. 
+But it does not have any variable in 
+global scope whose reference can be 
+over written. 
+But in this code too we are creating one 
+global utility. 
+Also the utility in this code does not have 
+return statement(we cant return anything from the func.) 
+And we can not pass arguments too. 
+soln: putting the utility on the prototype of function 
+itself. 
+<pre><code>
+[js]
+        // we are calling our utility "bind2" temporarily.
+        if (!Function.prototype.bind2) {
+          Function.prototype.bind2 =
+              function(o) {
+                var fn = this; // the function!
+                // when we will look at the call sight
+                // we will find that the utility is
+                // a function, so 'this' will apply to it.
+                // also we are calling it using 'implicit'
+                // binding of 'foo'. So 'this' will point to
+                // 'foo'.
+                return function() {
+                  return fn.apply(o, arguments);
+                };
+              };
+        }
+        function foo(baz) {
+          console.log(this.bar + " " + baz);
+        }
+        var obj = {bar: "bar"};
+        foo = foo.bind2(obj);
+        foo("baz")    // "bar baz"
+[js]
+</code></pre>
+In this code the utility has a return statement so 
+it is capable of returning some values, also 
+we will be able to pass arguments in this utility. 
+It is so common that the JavaScript has a <span class='quoted'>"bind()"</span> 
+function on the function 'prototype'. 
+So we dont need our 'bind2' utility. Its built-in. 
+(In ECMAScript 5) 
+When we go to the MDN page for binding, they have a 
+polyfills(they are to provide support for older browser). 
+So we can use the 'bind' utility in older browser too. 
+<li>4. "new keyword" (please set aside any conception about</li>
+the 'new' keyword) 
+(In other language 'new' keyword is used for instantiating 
+the classes but 
+a) JavaScript does not have classes 
+b) 'new' keyword has nothing to do with the 
+instantiation 
+) 
+<pre><code>
+[js]
+        function foo() {
+          this.baz = "baz";
+          console.log(this.bar + " " + baz);  // undefined undefined
+        }
+        var bar = "bar";
+        var baz = new foo();
+[js]
+</code></pre>
+When we put the 'new' keyword in front of any function 
+call, it magically turns that 'function call' into a 
+'constructor' call. 
+When we put the 'new' keyword in front of any function 
+<h2>call, it's going to do 4 things</h2>
+<li>1. A brand new empty 'object' will be created.</li>
+<li>2. * The new empty 'object' gets 'linked' to a different</li>
+object. 
+<li>3. the brand empty object get 'bound' as the 'this'</li>
+keyword for the purposes of that function call. 
+<li>4. If that function does not otherwise return anything.</li>
+Then it will implicitily insert, between line 3 and half 
+of the above code, a 'return' 'this'. 
+That is the brand new object get returned for the 
+purposes of the call. 
+So in the above code, when we call 'foo' function with 
+the 'new' keyword, an object as the 'this' reference 
+will get returned. 
+So we can have one variable on 'this' as 'baz', but 
+when we try to access 'this.bar', as there is nothing 
+called 'bar' on 'this', therefore, 'undefined' will 
+gets printed. 
+And at the moment, 'baz' variable exists but it does not 
+have any value so we will print 'undefined' again. 
+But final thing is that, there is a implicit 'return' 
+'this', so the newly created object gets assigned 
+to our 'baz' variable. 
+So if we try 'baz.baz' we will get the string value 'baz'. 
+<h2>How 'this' binding works</h2>
+<h2>Ask these questions</h2>
+<li>1. was the function called with 'new' keyword ?</li>
+If so, use that object. 
+Which means the 'new' keyword is able to override 
+any of the other rules as it is most 'precedent' of the 
+rules. 
+<li>2. Was the function called with 'call' or 'apply'</li>
+specifying an explicit 'this'? 
+If so, use that object. 
+<li>3. was the function called via a containing/ owning</li>
+object(context) ? 
+<li>4. Default: global object (except strict mode)</li>
+'hard bound' functions are a variation of explicit binding 
+rule. 
+So, what will be the precedence of 'hard binding'? 
+ans: At no 2, which means the 'new' keyword is able to 
+override the 'hard binding'. 
+<h2>Closure</h2>
+<h2>def</h2>
+Closure is when a function <span class='quoted'>"remembers"</span> its  <span class='quoted'>"lexical scope"</span> 
+even when the function is executed  <span class='quoted'>"outside that lexical"</span> 
+scope. 
+<h2>ex</h2>
+<pre><code>
+[js]
+      function foo() {
+        var bar = "bar";
+        function baz() {
+          console.log(bar);
+        }
+        bam(baz);
+      }
+      function bam(baz) {
+        baz();        // "bar"
+      }
+      foo();
+[js]
+</code></pre>
+<h2>*note*</h2>
+if we keep a reference to an object, that does not get 
+<span class='quoted'>"garbage"</span> collected. 
+Similarly untill we have atleat one function referencing 
+the <span class='quoted'>"scope"</span> object, through 'closure', <span class='quoted'>"scope"</span> does not 
+gets garbage collected. 
+<h2>prob</h2>
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+        for (var i = 1; i <= 5; i++) {
+          setTimeout(function() {
+            console.log("i: " + i);
+          }, 1 * 1000);
+        }
+[js]
+</code></pre>
+<h2>By running this example we will get the below result</h2>
+i: 6 
+i: 6 
+i: 6 
+i: 6 
+i: 6 
+i: 6 
+<h2>But why?</h2>
+Because through 'closure' the function inside setTimeout 
+is using the the global variable 'i' 
+and as we have live copy of the 'i' varible in each 
+function call, every 'i' value will get updated with 
+the last value. 
+<h2>"how to solve it ?"</h2>
+<h2>1. Using IIFI pattern</h2>
+we need to use the <span class='quoted'>"IIFE"</span> pattern. 
+<h2>ex</h2>
+<pre><code>
+[js]
+          for (var i=1; i<= 5; i++) {
+            (function(i){
+              setTimeout(function(){
+                console.log("i: " + i);
+              }, i * 1000);
+            })(i);
+          }
+[js]
+</code></pre>
+so now each of the <span class='quoted'>"setTimeout"</span> function will have 
+iteration scope rather than 'global' scope. 
+<h2>2. Using "let" keyword</h2>
+<pre><code>
+[js]
+        for (let i=1; i<5; i++) {
+          setTimeout(function(){
+            console.log("i: " + i);
+          },i*1000);
+        }
+[js]
+</code></pre>
+what 'let' keyword does is, it rebinds 'i' for 
+each 'iteration' of 'for' loop. 
+<h2>"classic module pattern"</h2>
+<h2>It has two characteristics</h2>
+<li>1. There must be an outer wrapping function that</li>
+gets executed.(does not have to be a IIFE, but it 
+does have to an outer function that gets 
+executed). 
+<li>2. There must be one or more functions that get</li>
+returned from that function call. So one or more 
+inner functions that have the closure over the 
+inner private scope. 
+<h2>ex</h2>
+<pre><code>
+[js]
+        var foo = (function() {
+          var o = {bar: "bar"};
+          return {
+            bar: function() { //these stuffs are like
+                              // private members of a
+                              // module.
+                              // And the obj "bar" is like
+                              // an public API.
+                              // There are one or more methods
+                              // on the API, that have the
+                              // special privilleged 'closure'
+                              // capability that access the
+                              // 'internal' state, and that
+                              // makes a module.
+              console.log(o.bar);
+            }
+          };
+        })();
+        foo.bar();
+[js]
+</code></pre>
+So all the function is 'hidden' from the outside world 
+and we get choose what we return on our public 'API'. 
+ <span class='quoted'>"This pattern is useful in implementing encapsulation."</span> 
+ <span class='quoted'>"This is the idea of hiding priviate implementation details"</span> 
+<h2>"modified module pattern"</h2>
+<pre><code>
+[js]
+      var foo = (function() {
+        var publicAPI = {
+          bar: function() {
+            publicAPI.baz();;
+          },
+          baz: function() {
+            console.log("baz");
+          }
+        };
+        return publicAPI;
+      })();
+      foo.bar();   // "baz"
+[js]
+</code></pre>
+<h2>"modern module pattern"</h2>
+<pre><code>
+[js]
+      define("foo", function() {
+        var o = {bar: "bar"};
+        return {
+          bar: function() {
+            console.log(o.bar);
+          }
+        };
+      });
+[js]
+</code></pre>
+we have a named module 'foo' and we are doing stuff on 
+that. 
+This pattern when used using <span class='quoted'>"IIFE"</span> pattern, can only 
+provide one instance, meaning its only for 'one time use'. 
+On the other hand if we use this pattern by using common 
+function and then assign the return value to different 
+varibles, we will have different instance of the same module. 
+<h2>ex</h2>
+<pre><code>
+[js]
+      var foo = function() {
+        var publicAPI = {
+          bar: function() {
+            publicAPI.baz();;
+          },
+          baz: function() {
+            console.log("baz");
+          }
+        };
+        return publicAPI;
+      };
+      var myFoo = foo();
+      var yourFoo = foo();
+[js]
+</code></pre>
+<h2>Object Orienting</h2>
+<h2>1. prototype</h2>
+<h2>code</h2>
+<pre><code>
+[js]
+        function Foo(who) {
+          this.me = who;
+        }
+        Foo.prototype.identify = function() {
+          return "I am " + this.me;
+        };
+        var a1 = new Foo("a1");
+        var a2 = new Foo("a2");
+        a2.speak = function() {
+          alert("Hello, " + this.identify() + ".");
+        };
+        a1.constructor === Foo;
+        a1.constructor === a2.constructor;
+        a1.__proto__ === Foo.prototype;
+        a1.__proto__ === a2.__proto__;
+[js]
+</code></pre>
+Every single <span class='quoted'>"object"</span> is built by a constructor 
+function. 
+Each time a constructor is called, a new object it 
+created. 
+A constructor makes an object  <span class='quoted'>"based on"</span> its own 
+prototype. 
+ <span class='quoted'>"based on"</span> is not completely true in case of 
+JavaScript. 
+ <span class='quoted'>"based on"</span> implies that we take the prototype and 
+we stamp out a copy of it. 
+This is true in 'class' oriented languages. 
+so 'based on' give us the wrong idea. 
+<h2>A more appropriate way of saying the above thing is</h2>
+- A constructor makes an object  <span class='quoted'>"linked to"</span> its own 
+prototype. 
+*note*: while discussing the 'new' keyword we said in 
+the 'second' step that it linked to an object. 
+<h2>*** Note ***</h2>
+Before anything gets executed in the above code 
+<h2>we already have somethings, which are</h2>
+<li>1. A function called 'Object' (capital 'O')</li>
+<li>2. An object which does not have any name, but a</li>
+label named 'Object.prototype'. 
+Object func ----".prototype"------> unnamed object 
+The <span class='quoted'>"Object"</span> function has been linked to the object 
+which does not have any name. 
+On the unnamed object, we have functions like 
+<span class='quoted'>"toString"</span> and several values which are built in 
+the language. 
+<h2>When the first line of above code gets executed</h2>
+<li>1. we will have a function called "Foo",</li>
+<li>2. its also going to create an "object" that</li>
+we are linked to, and it will have the same 
+arbitrary name: <span class='quoted'>".prototype".</span> 
+Foo func -------".prototype"-------> unnamed object 
+Also the unnamed object is linked to the 
+unnamed object of the 'Object' function and this 
+linkage is labeled as '[[p]]'. 
+ ("[[p]]"</span> is explained later in this notes) 
+<li>3. In addition to the above connection, there is</li>
+also a connection in the opposite direction. 
+The unnamed object has a property on the <span class='quoted'>"function"</span> 
+called <span class='quoted'>".constructor".</span> 
+Foo function <------".constructor"---- unnamed object 
+Most people think the '.constructor' means is 
+constructed by. In other words the unnamed object 
+is constructed by the <span class='quoted'>"function".</span> 
+ <span class='quoted'>"But its not true".</span> 
+The word 'constructor' is an arbitrary word 
+it could have been any other random word. 
+So there is a <span class='quoted'>"two-way"</span> linkage. 
+Now when we execute the 
+ <span class='quoted'>"Foo.prototype.identify = function()"</span> 
+line, we put the <span class='quoted'>"identify"</span> property directly 
+on the <span class='quoted'>"unnamed"</span> function. 
+Now coming on the code  <span class='quoted'>"var a1 = new Foo('a1')"</span> 
+Here we have encountered the <span class='quoted'>"new"</span> keyword. 
+<h2>So four things will happen</h2>
+<li>1. brand new object will gets created.</li>
+<li>2. object gets linked another object.</li>
+(so the newly created object will get linked 
+to the 
+<li>3. The contex gets set to the 'this'. So the newly</li>
+created object will have a property called 'me', 
+which will have the value 'a1'. 
+<li>4. We return 'this', which gets assigned to the</li>
+variable 'a1' in the code. 
+So now the name of the newly created object will 
+be 'a1'. 
+Now executing 'a2.speak = function()' 
+This will put the 'speak' property on the object 
+which is 'a2'. 
+So at this point of time, if we try to execute 
+'a1.speak()', it wont get executed as there is 
+no property called 'speak' on the 'a1' object. 
+Coming on to the code 'a1.constructor === Foo'. 
+There is no direct property called 'constructor' 
+on the 'a1' object. 
+Some people think that there is a hidden property 
+called 'constructor' on the 'a1' object, but in 
+reality its not there. 
+So when we execute the above code, as there is 
+no property called 'constructor' on the 'a1' object 
+it will go up in the <span class='quoted'>"Prototypical"</span> chain. 
+And the unnamed object has a linkage of '.constructor' 
+so the call will end of being 'Foo'. 
+so 'a1.constructor is Foo'. 
+The linkage of newly created object, such as 'a1', 
+with the unnamed object, which is linked with the 
+function such as 'Foo' using '.prototype' label, is 
+called  <span class='quoted'>"Prototypical linkage".</span> 
+In the specs this linkage is denoted by <span class='quoted'>"[[Prototype]]"</span> 
+But in this notes we will say it [[P]] instead. 
+They are internal linkage, they are not visible to 
+public. 
+Now when we execute 'a1.__proto__ === Foo.prototype' 
+The name for '__proto__' is 'dunder'. 
+The pronounciation of the above property is 
+'dunder proto property'. 
+So when the above code will get executed it will check 
+whether 'a1' have a 'dunder proto' property. 
+As it does not have, it will go up in the Prototypical 
+chain and check the same thing on the unnamed object. 
+As that object also does not have the 'dunder proto' 
+property, so we will go up in the Prototypical chain, 
+which happens to be the unnamed object of the 
+'Object' function. 
+Now on this object there is a property named 
+'__proto__'. 
+It turns out that it is not a property, rather its 
+a 'getter' function. So the above code is a 
+ <span class='quoted'>"function call".</span> 
+This function returns the 'internal prototype' linkage 
+of whatever the 'this' binding is. 
+So when we have called the '__proto__' function, the 
+'this' keyword is 'a1'. 
+So this function  <span class='quoted'>"returns the internal prototype"</span> linkage 
+of 'a1'. 
+So the <span class='quoted'>"[[P]]"</span> was the internal linkage and '__proto__' 
+is the public linkage of 'a1' with the unnamed object 
+of the 'Foo' function. 
+So '__proto__' is the public property that references 
+the internal characteristics. 
+The problem with 'dunder proto' is, it never been 
+standardised. 
+But its a de-facto standard for every other browser 
+except the 'IE'. 
+So we can see that 'a1.__proto__' is same as 
+'Foo.prototype'. 
+The same goes for 'a2'. 
+As of <span class='quoted'>"ES5",</span> there is an standard utility 
+<pre><code>
+[js]
+            a1.__proto__ === Object.getPrototypeOf(a1);
+[js]
+</code></pre>
+So this utility extract the internal Prototypical 
+linkage for us. 
+So this utility is there for  <span class='quoted'>"IE > 8"</span> 
+But what we will do for browsers < 8. 
+<h2>sol</h2>
+<pre><code>
+[js]
+            a2.__proto__ == a2.constructor.prototype;
+            // for IE < 8
+[js]
+</code></pre>
+But the problem is, 'both the property' 
+'the constructor property' and 'the prototype' 
+property are 'writable' property. They happen 
+to default to pointing where we discussed above. 
+But when they gets over written, the above code 
+for  <span class='quoted'>"IE < 8"</span> is unreliable. 
+<h2>code</h2>
+<pre><code>
+[js]
+        function foo(who) {
+          this.me = who;
+        }
+        Foo.prototype.identify = function() {
+          return "I am " + this.me;
+        };
+        function Bar(who) {
+          Foo.call(this, who);
+        }
+        // Bar.prototype = new Foo(); // or...
+        Bar.prototype = Object.create(Foo.prototype);
+        // NOTE: .constructor is broken here, need to fix
+        Bar.prototype.speak = function() {
+          alert("Hello, " + this.identify() + ".");
+        };
+        var b1 = new Bar("b1");
+        var b2 = new Bar("b2");
+        b1.speak(); // alerts: "Hello, I am b1."
+        b2.speak(); // alerts: "Hello, I am b2."
+[js]
+</code></pre>
+In the above code we wanted the class <span class='quoted'>"Bar"</span> to 
+be the child of the <span class='quoted'>"Foo"</span> class. As we have written 
+the function names in CAPS, they refer to the class. 
+We can achieve this by assigning what is there in 
+the comment in the code  <span class='quoted'>"// Bar.prototype = new Foo();"</span> 
+But by this way we will unwantedly  <span class='quoted'>"call Foo every"</span> time. 
+Soln is use the 'Object.create'. 
+The 'Object.create' does the first two things of what 
+'new' keyword does. 
+In this code, when we call 'var b1 = new  Bar("b1")'.</span> 
+'this' will point to 'b1' 
+So when we call 'b1.speak();' it will check whether 
+'b1' is having a 'speak' property. No it does not have. 
+Then it will go Prototypically up, and check whether 
+<span class='quoted'>"Bar.prototype"</span> have 'speak' property, and it is 
+there on the 'Bar', so it will call it. 
+Now in the speak property, we have 'this.identify', 
+here 'this' points to 'b1', so we check whether 'b1' 
+has a 'identify' property, as it does not have, we 
+will go Prototypically up, and check if 
+<span class='quoted'>"Bar.prototype"</span> has a identify property. 
+No, so we traverse further up, and check whether 
+<span class='quoted'>"Foo.prototype"</span> has a 'identify' property, as it has 
+it gets called. 
+But there is a drawback in this approach. 
+We have lost the '.constructor' linkage. But how? 
+As of line 6 in the above code we have the 
+'.constructor' property but when we 
+execute the code on line 12, we change the 
+reference of the prototype object, and the 
+newly created one does not have a '.constructor' 
+property. 
+So we will delegate up to check 'does the foo' 
+prototype has a '.constructor', yes it does and it 
+is pointing to the <span class='quoted'>"Foo",</span> so we get <span class='quoted'>"Foo"</span> instead 
+of <span class='quoted'>"Bar".</span> 
+So this bizzare result proves that <span class='quoted'>".constructor"</span> 
+does not mean 'is constructed by', it is simply 
+an arbitrary property. 
+Now we can use the class pattern rather than the 'module pattern'. 
+For this all the methods which were private in the 
+module pattern will now come to the  <span class='quoted'>"prototype of the class".</span> 
+<h2>It is necessary to write the prototype like</h2>
+<span class='quoted'>"ClassName.prototype.someMethod"</span> 
+<h2>Because when we write like</h2>
+<pre><code>
+[js]
+      ClassName.prototype = {
+<h2>someMethod</h2>
+      }
+[js]
+</code></pre>
+We are actually overriding the prototype and thus we will 
+loose the '.constructor' property. 
+Generally we should always use the dynamic binding 
+provided to us using 'this' but there is one instance 
+where we have to fallback to the lexical way of 
+doing things. 
+<h2>consider the below example</h2>
+<pre><code>
+[js]
+        NotesManager.prototype.showHelp = function() {
+          this.$help.show(); // $help is just a convention
+                            // for saying that this variable
+                            // belongs to JQuery.
+          document.addEventListener("click", function __handler__(evt){
+            evt.preventDefault();
+            evt.stopPropagation();
+            evt.stopImmediatePropagation();
+            document.removeEventListener("click", __handler__, true);
+            this.hideHelp();
+          //}, true)
+            }.bind(this),true)
+        };
+[js]
+</code></pre>
+Now when we call this function, the 'this' in the 
+last line of code  <span class='quoted'>"will not point"</span> to the reference 
+we want, rather it will be the 'button' on which 
+the listener is being called. 
+To solve this problem we can use '.bind' function. 
+So we do like the uncommented last line. 
+But in the event listener function we are 
+ <span class='quoted'>"removing the event listener"</span> using the <span class='quoted'>"named"</span> method. 
+But due the  <span class='quoted'>"hard binding"</span> the  <span class='quoted'>"named function"</span> is <span class='quoted'>"not"</span> 
+there. 
+<h2>So only in this case we do like below</h2>
+<pre><code>
+[js]
+          NotesManager.prototype.showHelp = function() {
+            var self = this;
+            self.$help.show(); // $help is just a convention
+                              // for saying that this variable
+                              // belongs to JQuery.
+            document.addEventListener("click", function __handler__(evt){
+              evt.preventDefault();
+              evt.stopPropagation();
+              evt.stopImmediatePropagation();
+              document.removeEventListener("click", __handler__, true);
+              self.hideHelp();
+            }, true)
+[js]
+</code></pre>
+ <span class='quoted'>"But in general this is not a good practice"</span> 
+<h2>2. Inheritance</h2>
+Inheritance means that the child is having the copy of 
+what the parent have. 
+So its not wise to call  <span class='quoted'>"prototypal inheritance"</span> for 
+JavaScript as we are not using the word inheritance for 
+its correct meaning. 
+In JavaScript when we have the object arbitrarily 
+called 'Foo.prototype' and when we have 'a1' and 'a2' 
+object, they are linked in the opposite way to what 
+inheritance does. 
+<h2>In inheritance we have the below structor</h2>
+ <span class='quoted'>"parent -----------> child"</span> 
+meaning child is a copy of the parent. 
+<h2>But in JS</h2>
+ <span class='quoted'>"Foo.prototype <----------- child"</span> 
+meaning the child is behaivirally linked 
+to the prototype. 
+This delegation in JS is a  <span class='quoted'>"design pattern"</span> and it is 
+called 'Behavior Delegation'. 
+<li>2. OLOO: (Objects Linked to Other Objects)</li>
+<h2>Consider the below code</h2>
+<pre><code>
+[js]
+        function Foo(who) {
+          this.me = who;
+        }
+        Foo.prototype.identify = function() {
+          return "I am " + this.me;
+        };
+        function Bar(who) {
+          Foo.call(this, who);
+        }
+        Bar.prototype = Object.create(Foo.prototype);
+        Bar.prototype.speak = function() {
+          alert("Hello, " + this.identify() + ".");
+        };
+        var b1 = new Bar("b1");
+        b1.speak();
+[js]
+</code></pre>
+In this code we only need to care about the three 
+objects which are prototypically linked. 
+<span class='quoted'>"b1"</span> is linked to <span class='quoted'>"Bar.prototype".</span> 
+<span class='quoted'>"Bar.prototype"</span> is linked to <span class='quoted'>"Foo.prototype".</span> 
+Now the same thing can be achieved by using only the 
+<span class='quoted'>"objects"</span> rather than the <span class='quoted'>"constructor".</span> 
+As a first step towards refinement we will remove 
+the 'new' keyword. 
+<h2>The refined code will look like the below</h2>
+<pre><code>
+[js]
+          function Foo(who) {
+            this.me = who;
+          }
+          Foo.prototype.identify = function() {
+            return "I am " + this.me;
+          };
+          function Bar(who) {
+            Foo.call(this, who);
+          }
+          Bar.prototype = Object.create(Foo.prototype);
+          Bar.prototype.speak = function() {
+            alert("Hello, " + this.identify() + ".");
+          };
+          var b1 = Object.create(Bar.prototype);
+          Bar.call(b1, "b1");
+          b1.speak();
+[js]
+</code></pre>
+In this refinment remove the 'new' keyword and 
+instead use the 'Object.create' utility to 
+create a  <span class='quoted'>"brand new object"</span> and <span class='quoted'>"link"</span> the object to 
+the <span class='quoted'>"prototype".</span> 
+Then we explicitly bind the 'Bar' 'this' to 'b1'. 
+<h2>Consider the second refinment below</h2>
+<pre><code>
+[js]
+          function Foo(who) {
+            this.me = who;
+          }
+          Foo.prototype.identify = function() {
+            return "I am " + this.me;
+          };
+          //changed
+          var Bar = Object.create(Foo.prototype);
+          Bar.init = function(who) {
+            Foo.call(this, who);
+          };
+          // changed
+          Bar.speak = function() {
+            alert("Hello, " + this.identify() + ".");
+          };
+          var b1 = Object.create(Bar); // changed
+          b1.init("b1"); // changed
+          b1.speak();
+[js]
+</code></pre>
+In this refinment, we have ditched the function <span class='quoted'>"Bar"</span> 
+and made <span class='quoted'>"Bar"</span> an object instead. 
+<h2>Consider the third refinment</h2>
+<pre><code>
+[js]
+          var Foo = {
+            init: function(who) {
+              this.me = who;
+            },
+            identify: function() {
+              return "I am " + this.me;
+            }
+          };
+          var Bar = Object.create(Foo);
+          Bar.speak = function() {
+            alert("Hello, " + this.identify() + ".");
+          };
+          var b1 = Object.create(Bar);
+          b1.init("b1");
+          b1.speak();
+[js]
+</code></pre>
+Now these are peer objects that can delegate to 
+each other. 
+<h2>3. Object.create</h2>
+<pre><code>
+[js]
+      if (!Object.create) {
+        Object.create = function(o) {
+          function F() {}
+          F.prototype = o;
+          return new F();
+        };
+      }
+[js]
+</code></pre>
+<h2>Async Patterns</h2>
+<li>1. Callbacks</li>
+<li>2. Generators / Coroutines</li>
+<li>3. Promises</li>
+<h2>1. Callbacks</h2>
+<h2>"callback hell"</h2>
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+          setTimeout(function(){
+            console.log("one");
+            setTimeout(function(){
+              console.log("two");
+              setTimeout(function(){
+                console.log("three");
+              }, 1000);
+            }, 1000);
+          }, 1000);
+[js]
+</code></pre>
+<h2>*Note*</h2>
+callback hell does not have anything to do with 
+nesting. 
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+          function one(cb) {
+            console.log("one");
+            setTimeout(cb, 1000);
+          }
+          function two(cb) {
+            console.log("two");
+            setTimeout(cb, 1000);
+          }
+          function three() {
+            console.log("three");
+          }
+          one(function(){
+            two(three)
+          });
+[js]
+</code></pre>
+<h2>"Inversion of control"</h2>
+When we loose controll over a program to let it 
+execute by some third party library. 
+<h2>"Solving callback problems"</h2>
+<h2>1. separate callbacks</h2>
+<pre><code>
+[js]
+          function trySomething(ok, err) {
+            setTimeout(function(){
+              var num = Math.random();
+              if (num > 0.5) ok(num);
+              else err(num);
+            }, 1000);
+          }
+          trySomething(
+            function(num){
+              console.log("Success: " + num);
+            },
+            function(num){
+              console.log("Sorry: " + num);
+            }
+          );
+[js]
+</code></pre>
+In this we expect the third party library to 
+call one method when there is <span class='quoted'>"success"</span> and 
+the other when there is <span class='quoted'>"failure".</span> 
+But this is more  <span class='quoted'>"implicit trust",</span> because 
+we are trusting the them that they will call 
+ <span class='quoted'>"only one method".</span> But what will happen when they 
+call both the methods:  <span class='quoted'>"Our code will break".</span> 
+<h2>2. error-first style</h2>
+<pre><code>
+[js]
+          function trySomething(cb) {
+            setTimeout(function(){
+              var num = Math.random();
+              if (num > 0.5) cb(null, num);
+              else cb("Too low!");
+            }, 1000);
+          }
+          trySomething(function(err, num){
+            if (err) {
+              console.log(err);
+            }
+            else{
+              console.log("Number: " + num);
+            }
+          });
+[js]
+</code></pre>
+In this code we have only one function. 
+So we are only checking for the 'error' object. 
+But consider a scenario when they return an error 
+object and then a success value. 
+In this situation we will reject the success value 
+as we are only checking for the error object. 
+<h2>2. Generators (yield) ("ES6")</h2>
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+        function* gen() {
+          console.log("hello");
+          yield null;
+          console.log("World");
+        }
+        var it = gen();
+        it.next(); // prints "Hello"
+        it.next(); // prints "World"
+[js]
+</code></pre>
+so calling the <span class='quoted'>"gen"</span> function, creates an <span class='quoted'>"iterator".</span> 
+so when we call <span class='quoted'>"it.next()"</span> it will start from the 
+line 2 and execute till it encounters a 'yield' statement. 
+The second 'it.next()' will also run till it encounters 
+a 'yield' statement or till end of the program. 
+'yield' is used for  <span class='quoted'>"two way message passing".</span> 
+meaning we can pass value to 'yield' from outside 
+and 'yield' can also return value to the calling function. 
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+        var run = coroutine(function* (){
+          var x = 1 + (yield null);
+          var y = 1 + (yield null);
+          yield(x + y);
+        });
+        run();
+        run(10);
+        console.log("something: " + run(30).value);
+[js]
+</code></pre>
+So when first run() will be called, the 'yield' will 
+return 'null' to the function. 
+When we call run(10), the value of the previous 'yield' 
+expression will be 10. 
+So the value of 'x = 11'. 
+and it encounters the next 'yield' and 'null' will get 
+returned to 'run(10)' 
+now when 'run(30)' will get executed, 30 will get 
+substituted for the 'yield' expression and 
+'y = 31'. 
+Then it encounters the next 'yield' and (x + y) will 
+be returned which is '42'. 
+Till now everything was looking <span class='quoted'>"synchronous"</span> in 
+generators. 
+<h2>consider the below code</h2>
+<pre><code>
+[js]
+        function getData(d) {
+          setTimeout(function() {run(d);}, 1000);
+        }
+        var run = coroutine(function* (){
+          var x = 1 + (yield getData(10));
+          var y = 1 + (yield getData(30));
+          var answer = (yield getData("something: " + (x + y)));
+          console.log(answer);
+        });
+        run();
+[js]
+</code></pre>
+<h2>3. Promises</h2>
+<h2>JQuery style Promises</h2>
+<pre><code>
+[js]
+        var wait = jQuery.Deferred();
+        var p = wait.promise();
+        // this happens when we listen for an event
+        // continuation event
+        p.done(function(value) {
+          console.log(value);
+        });
+        // when we call resolve on Deferred, it will
+        // automatically fires the 'done' event for
+        // any promises that are listening to it.
+        setTimeout(function(){
+          wait.resolve(Math.random());
+        }, 1000);
+[js]
+</code></pre>
+<h2>ex</h2>
+<pre><code>
+[js]
+        function waitForN(n) {
+          var d = $.Deferred();
+          setTimeout(d.resolve, n);
+          return d.promise();
+        }
+        // promise gets returned from the
+        // waitForN function, and when we call
+        // '.then' we are listening for the
+        // continuation event on that returned promise.
+        waitForN(1000).then(function() {
+          console.log("hello world");
+          return waitForN(2000);
+        })
+        .then(function(){
+          console.log("finally!");
+        });
+[js]
+</code></pre>
+Promises un-invert the 'inversion of control' 
+<h2>prob</h2>
+Make three request to fetch some data from files 
+asyncronously, but display them in the give order. 
+<h2>sol</h2>
+For this problem we need to track the internal 
+state of the call, if we are using 'callbacks'. 
+<h2>How event loop works in JS</h2>
+<h2>Our browser have following things</h2>
+<li>1. call stack (js runtime)</li>
+<li>2. WebAPIs (ex: setTimeout, DOM(document), ajax(XMLHttpRequest))</li>
+<li>3. event loop</li>
+Actually JS is single threaded. 
+<h2>So when we execute some things such as the below code</h2>
+<pre><code>
+[js]
+      console.log("hiii there");
+      function foo() {
+        console.log("hello");
+      }
+      function bar() {
+        console.log("there");
+        foo();
+      }
+      function baz() {
+        console.log("hi");
+        bar();
+      }
+      baz();
+[js]
+</code></pre>
+<h2>How these things are executed by the JS runtime is</h2>
+<li>1. At first 'main()' will appear in the stack.</li>
+'main()' is the anonymous function corresponding to the 
+file itself. 
+<li>2. then 'console.log("hiii there")' will appear in the</li>
+<span class='quoted'>"stack".</span> 
+<li>3. then "baz()"</li>
+<li>4. then 'console.log("hi")'</li>
+<li>5. then 'bar()'</li>
+<li>6. then 'console.log("there")'</li>
+and like that. 
+<h2>But consider the below code</h2>
+<pre><code>
+[js]
+      console.log("hii there");
+      setTimeout(function foo() {
+        console.log('hello there')
+      });
+      console.log("hii")
+[js]
+</code></pre>
+how will this code gets executed? 
+<h2>When we check the 'call stack' we will find</h2>
+<li>1. console.log("hii there") will get executed.</li>
+<li>2. setTimeout(function foo() {</li>
+console.log('hello there') 
+}); will get executed but it will disappear from the 
+stack before executing console.log('hello there'). 
+<li>3. then console.log("hii") will get executed.</li>
+But where does that setTimeout function went? 
+Actually 'setTimeout' is a function defined in <span class='quoted'>"WebAPI"</span> 
+not in actual  <span class='quoted'>"JS runtime".</span> 
+So the function after leaving the 'call stack' will 
+enter into the <span class='quoted'>"WebAPI"</span> and that 'api' will keep track 
+of the 'timer'. 
+When the timer is complete, as it can not directly modify 
+the 'call stack', it will throw the function into the 
+ <span class='quoted'>"event loop"</span> or  <span class='quoted'>"task queue".</span> 
+ <span class='quoted'>"Event loop"</span> has to wait till the stack is clear, before 
+it can push the 'callback' on the  <span class='quoted'>"call stack".</span> 
+<span class='quoted'>"setTimeout"</span> is not a guranteed time of execution, it is 
+minimum time of execution. 
+When we block the stack with some 'slow' work, the 
+browser does not render, (render queue gets stopped). 
+So during that time, nothing will work, no buttons, no 
+selection, nothing. 
+Where in case of asyncronous call, browser gets a chance 
+to re-render after every call. 
