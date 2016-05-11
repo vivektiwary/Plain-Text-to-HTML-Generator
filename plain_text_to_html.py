@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+import re
 
 
 class ConvertTextToHtml():
@@ -8,6 +9,7 @@ class ConvertTextToHtml():
         self.input_file = file(sys.argv[1], 'r+')
         self.output_file = file(sys.argv[2], 'a')
         self.lang_flag = sys.argv[3]
+        self.list_num_regex = re.compile(r"(\d+)\s.*")
 
     def write_to_file(self, line):
         if not self.output_file.closed:
@@ -109,6 +111,11 @@ class ConvertTextToHtml():
             self.write_to_file("\n")
             self.is_unordered_list_open = False
 
+    def get_list_number(self, line):
+        match_obj = self.list_num_regex.match(line)
+        if match_obj:
+            return match_obj.group(1)
+
     def process_file(self):
         line_count = int(self.input_file.readline())
         self.file_line_count = line_count
@@ -118,11 +125,34 @@ class ConvertTextToHtml():
         self.is_unordered_list_open = False
         self.list_start = False
         self.list_string = ""
+        self.pre_tag_start = False
         self.open_code_block_encountered = False
         self.code_block = False
         while line or count < self.file_line_count:
             if line:
-                if line[-1] == ':' and ("**" not in line):
+                if "<pre>" in line:
+                    self.pre_tag_start = True
+                    self.write_to_file(raw_line.rstrip())
+                    self.write_to_file("\n")
+                elif "</pre>" in line:
+                    self.pre_tag_start = False
+                    self.write_to_file(raw_line.rstrip())
+                    self.write_to_file("\n")
+
+                elif self.pre_tag_start:
+                    self.write_to_file(raw_line.rstrip())
+                    self.write_to_file("\n")
+
+                elif line[0].isdigit():
+                    list_number = self.get_list_number(line)
+                    if list_number == 1:
+                        self.open_unordered_list()
+                    self.complete_list(self.list_string)
+                    self.list_start = not self.list_start
+                    if self.list_start:
+                        self.list_string += " " + line
+
+                elif line[-1] == ':' and ("**" not in line):
                     self.complete_list(self.list_string)
                     self.close_unordered_list()
                     line = line[:-1]
@@ -134,13 +164,6 @@ class ConvertTextToHtml():
                     line = line.replace("**", "")
                     self.make_h3_header(line)
 
-                elif line[0].isdigit():
-                    if int(line[0]) == 1:
-                        self.open_unordered_list()
-                    self.complete_list(self.list_string)
-                    self.list_start = not self.list_start
-                    if self.list_start:
-                        self.list_string += " " + line
                 else:
                     if line.startswith("========"):
                         self.complete_list(self.list_string)
