@@ -8,7 +8,6 @@ class ConvertTextToHtml():
         self.input_file = file(sys.argv[1], 'r+')
         self.output_file = file(sys.argv[2], 'a')
         self.lang_flag = sys.argv[3]
-        self.file_line_count = 1865
 
     def write_to_file(self, line):
         if not self.output_file.closed:
@@ -16,82 +15,158 @@ class ConvertTextToHtml():
         else:
             print "problem in opening file"
 
-    def make_header(self, line):
+    def make_h2_header(self, line):
         line = "<h2>" + line + "</h2>"
-        return line
+        self.write_to_file(line)
+        self.write_to_file("\n")
 
-    def make_list(self, line):
-        line = "<li>" + line + "</li>"
-        return line
+    def make_h3_header(self, line):
+        line = "<h3>" + line + "</h3>"
+        self.write_to_file(line)
+        self.write_to_file("\n")
+
+    def make_start_code_block(self, line):
+        line = "<pre><code>" + "\n" + line
+        self.write_to_file(line)
+        self.write_to_file("\n")
+
+    def make_end_code_block(self, line):
+        line = line + "\n" + "</code></pre>"
+        self.write_to_file(line)
+        self.write_to_file("\n")
+
+    def make_code_block(self, line):
+        self.open_code_block_encountered = not self.open_code_block_encountered
+
+        if self.open_code_block_encountered:
+            self.code_block = True
+            if self.lang_flag in line:
+                self.make_start_code_block(line)
+        else:
+            self.code_block = False
+            if self.lang_flag in line:
+                self.make_end_code_block(line)
+
+    def make_code_snippet(self, line):
+        self.write_to_file(line.rstrip())
+        self.write_to_file("\n")
+
+    def make_quote_word(self, word):
+        result = "<span class='quoted'>" + word + "</span>"
+        self.write_to_file(result)
+        self.write_to_file(" ")
+
+    def make_end_quote(self, word):
+        self.quote_open = False
+        self.quoted_line = self.quoted_line + " " + word + "</span>" + " "
+        self.write_to_file(self.quoted_line)
+        self.quoted_line = ""
+
+    def is_a_quoted_word(self, word):
+        if ((word.startswith("\"") or word.startswith("'")) and
+                (word.endswith("\"") or word.endswith("'") or word.endswith(".") or word.endswith(","))):
+            return True
+        return False
+
+    def make_quoted_string(self, line):
+        self.quote_open = False
+        self.quoted_line = ""
+        for word in line.split():
+            if self.is_a_quoted_word(word):
+                self.make_quote_word(word)
+            elif word.startswith("\"") or word.startswith("'"):
+                self.quote_open = True
+                self.quoted_line = self.quoted_line + " " + "<span class='quoted'>" + word
+            elif word.endswith("\"") or word.endswith("'"):
+                self.make_end_quote(word)
+            elif (word.endswith(".") or word.endswith(",")) and ("\"" or "'") in word:
+                self.make_end_quote(word)
+            else:
+                if self.quote_open:
+                    self.quoted_line += " " + word
+                else:
+                    self.write_to_file(word)
+                    self.write_to_file(" ")
+
+        self.write_to_file("\n")
+
+    def complete_list(self, line):
+        if self.list_string != "":
+            line = "<li>" + line + "</li>"
+            self.write_to_file(line)
+            self.write_to_file("\n")
+            self.list_start = False
+            self.list_string = ""
+
+    def open_unordered_list(self):
+        self.is_unordered_list_open = True
+        self.write_to_file("<ul>")
+        self.write_to_file("\n")
+
+    def close_unordered_list(self):
+        if self.is_unordered_list_open:
+            self.write_to_file("</ul>")
+            self.write_to_file("\n")
+            self.is_unordered_list_open = False
 
     def process_file(self):
+        line_count = int(self.input_file.readline())
+        self.file_line_count = line_count
         raw_line = self.input_file.readline()
         line = raw_line.strip()
         count = 0
-        open_code_block_encountered = False
-        code_block = False
+        self.is_unordered_list_open = False
+        self.list_start = False
+        self.list_string = ""
+        self.open_code_block_encountered = False
+        self.code_block = False
         while line or count < self.file_line_count:
             if line:
-                if line[-1] == ':':
+                if line[-1] == ':' and ("**" not in line):
+                    self.complete_list(self.list_string)
+                    self.close_unordered_list()
                     line = line[:-1]
-                    line = self.make_header(line)
-                    self.write_to_file(line)
-                    self.write_to_file("\n")
+                    self.make_h2_header(line)
+
+                elif "**" in line:
+                    self.complete_list(self.list_string)
+                    self.close_unordered_list()
+                    line = line.replace("**", "")
+                    self.make_h3_header(line)
+
                 elif line[0].isdigit():
-                    line = self.make_list(line)
-                    self.write_to_file(line)
-                    self.write_to_file("\n")
+                    if int(line[0]) == 1:
+                        self.open_unordered_list()
+                    self.complete_list(self.list_string)
+                    self.list_start = not self.list_start
+                    if self.list_start:
+                        self.list_string += " " + line
                 else:
                     if line.startswith("========"):
+                        self.complete_list(self.list_string)
+                        self.close_unordered_list()
                         pass
                     elif line.startswith("["):
-                        open_code_block_encountered = not open_code_block_encountered
+                        self.complete_list(self.list_string)
+                        self.close_unordered_list()
+                        self.make_code_block(line)
 
-                        if open_code_block_encountered:
-                            code_block = True
-                            if self.lang_flag in line:
-                                line = "<pre><code>" + "\n" + line
-                                self.write_to_file(line)
-                                self.write_to_file("\n")
-                        else:
-                            code_block = False
-                            if self.lang_flag in line:
-                                line = line + "\n" + "</code></pre>"
-                                self.write_to_file(line)
-                                self.write_to_file("\n")
-                    elif code_block and open_code_block_encountered:
-                        print 'this line is coming here', raw_line.rstrip()
-                        self.write_to_file(raw_line.rstrip())
-                        self.write_to_file("\n")
+                    elif self.code_block and self.open_code_block_encountered:
+                        self.complete_list(self.list_string)
+                        self.close_unordered_list()
+                        self.make_code_snippet(raw_line.rstrip())
 
                     else:
-                        quote_open = False
-                        quoted_line = ""
-                        for word in line.split():
-                            if word.startswith("\"") and (word.endswith("\"") or word.endswith(".") or word.endswith(",")):
-                                result = "<span class='quoted'>" + word  + "</span>"
-                                self.write_to_file(result)
-                                self.write_to_file(" ")
-                            elif word.startswith("\""):
-                                quote_open = True
-                                quoted_line = quoted_line + " " + "<span class='quoted'>" + word
-                            elif word.endswith("\""):
-                                quote_open = False
-                                quoted_line = quoted_line + " " + word + "</span>" + " "
-                                self.write_to_file(quoted_line)
-                                quoted_line = ""
-                            elif (word.endswith(".") or word.endswith(",")) and "\"" in word:
-                                quote_open = False
-                                quoted_line = quoted_line + " " + word + "</span>" + " "
-                                self.write_to_file(quoted_line)
-                                quoted_line = ""
-                            else:
-                                if quote_open:
-                                    quoted_line += " " +word
-                                else:
-                                    self.write_to_file(word)
-                                    self.write_to_file(" ")
-                        self.write_to_file("\n")
+                        if self.list_start:
+                            self.list_string += " " + line
+                        elif '"' in line or "'" in line:
+                            self.make_quoted_string(line)
+                        else:
+                            self.write_to_file(line)
+            elif line == '':
+                self.complete_list(self.list_string)
+                self.close_unordered_list()
+                self.write_to_file("\n")
 
             raw_line = self.input_file.readline()
             line = raw_line.strip()
